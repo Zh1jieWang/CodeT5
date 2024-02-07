@@ -67,10 +67,15 @@ def load_tokenize_data(args):
     else:
         # Example code to load and process code_x_glue_ct_code_to_text python dataset for code summarization task
         datasets = load_dataset("code_x_glue_ct_code_to_text", 'python', split="train")
+        # datasets = load_dataset('json', data_files='cache_data/open-assistant/train.jsonl')
+        # print datasets
+        print(f"datasets: {datasets}")
+
         tokenizer = AutoTokenizer.from_pretrained(args.load)
 
         def preprocess_function(examples):
             source = [' '.join(ex) for ex in examples["code_tokens"]]
+            # source = [' '.join(ex) for ex in examples["function_tokens"]]
             target = [' '.join(ex) for ex in examples["docstring_tokens"]]
 
             model_inputs = tokenizer(source, max_length=args.max_source_len, padding="max_length", truncation=True)
@@ -82,13 +87,20 @@ def load_tokenize_data(args):
             ]
             return model_inputs
 
+        # print dataset columns
+        # print(f"dataset columns: {datasets.column_names}")
+
+        print(f"Before mapping: {type(datasets)}, {datasets}")
         train_data = datasets.map(
             preprocess_function,
             batched=True,
+            batch_size=1,
+            # remove_columns=['retrieval_idx', 'function_tokens', 'docstring_tokens'],
             remove_columns=datasets.column_names,
-            num_proc=64,
+            num_proc=8,
             load_from_cache_file=False,
         )
+        print(f"After mapping: {type(train_data)}, {train_data}")
         print(f'  ==> Loaded {len(train_data)} samples')
         train_data.save_to_disk(args.cache_data)
         print(f'  ==> Saved to {args.cache_data}')
@@ -122,11 +134,11 @@ if __name__ == "__main__":
     parser.add_argument('--data-num', default=-1, type=int)
     parser.add_argument('--max-source-len', default=320, type=int)
     parser.add_argument('--max-target-len', default=128, type=int)
-    parser.add_argument('--cache-data', default='cache_data/summarize_python', type=str)
+    parser.add_argument('--cache-data', default='cache_dataa/summarize_python', type=str)
     parser.add_argument('--load', default='Salesforce/codet5p-220m', type=str)
 
     # Training
-    parser.add_argument('--epochs', default=10, type=int)
+    parser.add_argument('--epochs', default=1, type=int)
     parser.add_argument('--lr', default=5e-5, type=float)
     parser.add_argument('--lr-warmup-steps', default=200, type=int)
     parser.add_argument('--batch-size-per-replica', default=8, type=int)
