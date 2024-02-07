@@ -86,7 +86,7 @@ def load_tokenize_data(args):
             preprocess_function,
             batched=True,
             remove_columns=datasets.column_names,
-            num_proc=64,
+            num_proc=32,
             load_from_cache_file=False,
         )
         print(f'  ==> Loaded {len(train_data)} samples')
