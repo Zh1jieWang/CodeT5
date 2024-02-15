@@ -73,9 +73,19 @@ def load_tokenize_data(args):
 
         tokenizer = AutoTokenizer.from_pretrained(args.load)
 
+        # datasets = load_dataset("code_x_glue_ct_code_to_text", 'python', split="train")
+        datasets = load_dataset('json', data_files='cache_data/open-assistant/train.jsonl')
+        # print datasets
+        print(f"Before transform: datasets: {datasets}")
+
+        datasets = datasets['train']
+        print(f"After transform: datasets: {datasets}")
+
+        tokenizer = AutoTokenizer.from_pretrained(args.load)
+
         def preprocess_function(examples):
-            source = [' '.join(ex) for ex in examples["code_tokens"]]
-            # source = [' '.join(ex) for ex in examples["function_tokens"]]
+            # source = [' '.join(ex) for ex in examples["code_tokens"]]
+            source = [' '.join(ex) for ex in examples["function_tokens"]]
             target = [' '.join(ex) for ex in examples["docstring_tokens"]]
 
             model_inputs = tokenizer(source, max_length=args.max_source_len, padding="max_length", truncation=True)
@@ -97,7 +107,7 @@ def load_tokenize_data(args):
             batch_size=1,
             # remove_columns=['retrieval_idx', 'function_tokens', 'docstring_tokens'],
             remove_columns=datasets.column_names,
-            num_proc=8,
+            num_proc=32,
             load_from_cache_file=False,
         )
         print(f"After mapping: {type(train_data)}, {train_data}")
@@ -134,7 +144,7 @@ if __name__ == "__main__":
     parser.add_argument('--data-num', default=-1, type=int)
     parser.add_argument('--max-source-len', default=320, type=int)
     parser.add_argument('--max-target-len', default=128, type=int)
-    parser.add_argument('--cache-data', default='cache_dataa/summarize_python', type=str)
+    parser.add_argument('--cache-data', default='cache_dataa/open-assistant', type=str)
     parser.add_argument('--load', default='Salesforce/codet5p-220m', type=str)
 
     # Training
@@ -148,7 +158,7 @@ if __name__ == "__main__":
     parser.add_argument('--fp16', default=False, action='store_true')
 
     # Logging and stuff
-    parser.add_argument('--save-dir', default="saved_models/summarize_python", type=str)
+    parser.add_argument('--save-dir', default="saved_models/open-assistant", type=str)
     parser.add_argument('--log-freq', default=10, type=int)
     parser.add_argument('--save-freq', default=500, type=int)
 
